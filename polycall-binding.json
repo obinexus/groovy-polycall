@@ -1,0 +1,11 @@
+{
+  "name": "groovy-polycall",
+  "version": "1.5.0",
+  "language": "Groovy",
+  "adapter": true,
+  "ffi": true,
+  "config": "groovy-polycallrc",
+  "core": "../../src",
+  "license": "MIT OBINexus",
+  "author": "Nnamdi Michael Okpala"
+}

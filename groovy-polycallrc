@@ -1,0 +1,10 @@
+# groovy-polycallrc - read-only Groovy runtime overrides for libpolycall
+#
+# This file uses the SHARED polycall schema (src/config/polycall_config_schema.c).
+# It introduces no new keys or parser: the Groovy adapter passes this path to
+# the core via the FFI boundary. Values here override polycallrc for Groovy.
+
+log_level=info
+max_connections=1000
+network_timeout=5000
+tls_enabled=false

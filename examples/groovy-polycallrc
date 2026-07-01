@@ -1,0 +1,5 @@
+# Example Groovy runtime override
+log_level=debug
+max_connections=128
+network_timeout=2000
+tls_enabled=false
