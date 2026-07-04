@@ -1,4 +1,6 @@
-# Groovy tests (scaffold)
+# Groovy tests
 
-Add a smoke test that loads `../groovy-polycallrc`, calls the adapter, and asserts a
-zero status. Mirror the reference bindings (pypolycall / rust-polycall).
+`npm test` runs the native forwarding test, thin-adapter audit, and npm package
+integrity test. `npm run test:groovy` additionally compiles the Groovy API and
+runs it through a mock JNI library; that target requires Groovy and a JDK whose
+architecture matches the native compiler.

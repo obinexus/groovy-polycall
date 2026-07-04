@@ -1,0 +1,27 @@
+plugins {
+    id 'groovy'
+    id 'java-library'
+}
+
+group = 'org.obinexus'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation localGroovy()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+tasks.named('jar') {
+    manifest {
+        attributes('Automatic-Module-Name': 'org.obinexus.polycall.groovy')
+    }
+}

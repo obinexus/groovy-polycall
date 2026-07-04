@@ -1,0 +1,63 @@
+{
+  "name": "@obinexusltd/groovy-polycall",
+  "version": "1.0.0",
+  "description": "Groovy/JNI source binding for libpolycall 1.5",
+  "main": "index.js",
+  "type": "commonjs",
+  "files": [
+    "index.js",
+    "src/",
+    "c_src/",
+    "include/",
+    "generated/",
+    "examples/",
+    "tests/",
+    "scripts/",
+    "Makefile",
+    "build.gradle",
+    "settings.gradle",
+    "groovy-polycallrc",
+    "polycall-binding.json",
+    "README.md",
+    "TODO.md",
+    "LICENSE"
+  ],
+  "directories": {
+    "example": "examples",
+    "lib": "src",
+    "test": "tests"
+  },
+  "scripts": {
+    "build": "make",
+    "build:jni": "make jni",
+    "test": "make test && npm run verify:dry && npm run test:package",
+    "test:groovy": "make test-groovy",
+    "test:package": "node tests/package.test.js",
+    "verify:dry": "make verify-dry",
+    "verify": "npm test",
+    "prepack": "npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/obinexus/groovy-polycall.git"
+  },
+  "keywords": [
+    "libpolycall",
+    "polycall",
+    "groovy",
+    "jni",
+    "ffi"
+  ],
+  "author": {
+    "name": "Nnamdi Michael Okpala",
+    "email": "okpalan@protonmail.com"
+  },
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "bugs": {
+    "url": "https://github.com/obinexus/groovy-polycall/issues"
+  },
+  "homepage": "https://github.com/obinexus/groovy-polycall#readme"
+}

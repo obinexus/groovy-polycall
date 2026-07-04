@@ -1,14 +1,15 @@
-# TODO — groovy-polycall (Groovy)
+# TODO — groovy-polycall
 
-Status: 🧩 scaffolded adapter for libpolycall 1.5.0. Honestly not yet wired to
-the core — this file tracks the remaining work. Rolled up in
-[../../docs/release/TODO-1.5.md](../../docs/release/TODO-1.5.md).
+Status: implemented thin Groovy/JNI adapter for libpolycall 1.5.
 
-- [x] Folder structure, manifest, and `groovy-polycallrc` (shared schema)
-- [ ] Locate/generate Groovy FFI bindings for `polycall_ffi.h`
-- [ ] Implement the thin adapter in `src/` (idioms -> `polycall_ffi_run_config`)
-- [ ] Add a runnable example under `examples/`
-- [ ] Add a smoke test under `tests/`
-- [ ] Confirm `scripts/verify-dry.sh` passes (no core duplication)
+- [x] Publishable `@obinexusltd/groovy-polycall` npm source package
+- [x] Groovy API with status-returning and exception-based calls
+- [x] JNI string marshalling and native library loading
+- [x] Exact `polycall_ffi_run_config(config_path, 1)` forwarding
+- [x] Runnable example under `examples/`
+- [x] Native forwarding test and Groovy/JNI smoke test
+- [x] Thin-adapter source audit for Windows and POSIX shells
+- [ ] Exercise the JNI smoke test in release CI across Windows, Linux, and macOS
+- [ ] Publish signed platform-native artifacts alongside the source package
 
-Do not add config parsing or runtime logic here — adapt the core only.
+Do not add configuration parsing or runtime policy here; adapt the core only.

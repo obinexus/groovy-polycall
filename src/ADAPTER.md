@@ -1,8 +1,10 @@
-# Groovy adapter (scaffold)
+# Groovy adapter
 
-Implement the Groovy adapter here. It must call across the FFI boundary only:
+The public implementation lives under `main/groovy/org/obinexus/polycall`.
+It crosses the JNI/FFI boundary only through:
 
     status = polycall_ffi_run_config("groovy-polycallrc", /*run=*/1)
 
-Return/raise a Groovy-native error when `status` is non-zero. Do not parse
-config or duplicate any core logic. See ../../../docs/adapter-pattern.md.
+`Polycall.runConfig` returns the core status unchanged; `runConfigOrThrow`
+raises a `PolycallException` for non-zero statuses. No configuration parsing or
+core runtime logic belongs in this binding.
