@@ -5,23 +5,47 @@ plugins {
 
 group = 'org.obinexus'
 version = '1.0.0'
+description = 'Groovy binding for the Polycall binding ABI v1 (FFM, JDK 22+). Core: https://github.com/obinexus/polycall'
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation localGroovy()
+    api 'org.apache.groovy:groovy:4.0.33'
+    testImplementation platform('org.junit:junit-bom:5.14.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+// java.lang.foreign is final since JDK 22: build with any JDK >= 22, emit JDK 22 bytecode.
 java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+    sourceCompatibility = JavaVersion.VERSION_22
+    targetCompatibility = JavaVersion.VERSION_22
+}
+
+tasks.withType(GroovyCompile).configureEach {
+    groovyOptions.encoding = 'UTF-8'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    jvmArgs '--enable-native-access=ALL-UNNAMED'
+    environment 'POLYCALL_TELEMETRY', 'off'
+    // tests read the repository's own rc files relative to the project directory
+    workingDir = projectDir
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        exceptionFormat = 'full'
     }
 }
 
 tasks.named('jar') {
     manifest {
-        attributes('Automatic-Module-Name': 'org.obinexus.polycall.groovy')
+        attributes(
+            'Automatic-Module-Name': 'org.obinexus.polycall.groovy',
+            'Enable-Native-Access': 'ALL-UNNAMED',
+            'Implementation-Version': project.version
+        )
     }
 }

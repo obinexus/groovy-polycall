@@ -1,117 +1,78 @@
 # @obinexusltd/groovy-polycall
 
-Groovy/JNI binding for [libpolycall](https://github.com/obinexus/libpolycall)
-1.5. The adapter maps Groovy calls to the single core entry point:
+Groovy binding for the [Polycall](https://github.com/obinexus/polycall) core
+library, **binding ABI v1** (`polycall.h`, documented in the core's
+`docs/BINDING_ABI.md`).
 
-```c
-polycall_ffi_run_config(config_path, 1)
-```
-
-Configuration parsing, validation, networking, and runtime policy remain in
-libpolycall. This package only marshals the configuration path across JNI and
-returns the core status unchanged.
-
-## Install the source package
-
-```shell
-npm install @obinexusltd/groovy-polycall
-```
-
-The npm package publishes the complete Groovy, JNI, and C source tree. It is a
-native source distribution rather than a JavaScript implementation. In Node.js,
-`require('@obinexusltd/groovy-polycall')` returns absolute paths to the packaged
-sources, headers, configuration, manifest, and build files.
+The binding calls `polycall.dll` (Windows, MSVC build), `libpolycall.dll`
+(MinGW) or `libpolycall.so.1` (Linux) directly through the Java Foreign
+Function & Memory API (`java.lang.foreign`, JDK 22+), from `@CompileStatic`
+Groovy. There is no JNI shim and no C code to compile.
 
 ## Requirements
 
-- libpolycall 1.5 development library and headers
-- JDK 17 or newer
-- Groovy 4 or a Gradle installation with its bundled Groovy runtime
-- a C11 compiler and GNU Make
+- JDK 22 or newer (tested with JDK 25 on Linux and Windows, JDK 27 on Windows)
+- Groovy 4 (`org.apache.groovy:groovy:4.0.33`), Gradle 8.10+ to build
+- libpolycall >= 1.1.0 (binding ABI 1), 64-bit
 
-## Build
+## Loading the library
 
-Build the standalone adapter archive without linking the core:
-
-```shell
-make
-```
-
-Build the JNI shared library by supplying the JDK location and the linker flags
-for libpolycall:
-
-```shell
-export JAVA_HOME=/path/to/jdk
-export POLYCALL_LDFLAGS='-L/path/to/lib -lpolycall'
-make jni
-```
-
-PowerShell uses the same variables:
-
-```powershell
-$env:JAVA_HOME = 'C:\Program Files\Java\jdk-21'
-$env:POLYCALL_LDFLAGS = '-LC:\path\to\lib -lpolycall'
-make jni
-```
-
-Compile the Groovy classes with either Gradle or `groovyc`:
-
-```shell
-gradle classes
-# or
-groovyc -d build/classes src/main/groovy/org/obinexus/polycall/*.groovy
-```
-
-Place the JNI library on `java.library.path`, or pass its absolute path with
-`-Dgroovy.polycall.library=/absolute/path/to/the/library`.
+`POLYCALL_LIBRARY` (full path) first, then the `polycall.library` system
+property, then `polycall.dll` / `libpolycall.dll` (Windows), `libpolycall.so.1`
+(Linux), `libpolycall.1.dylib` (macOS) through the OS search. Every symbol is
+resolved up front and `polycall_ffi_abi_version()` must be 1; otherwise a
+`PolycallLoadException` names the library and the problem. Run the JVM with
+`--enable-native-access=ALL-UNNAMED`.
 
 ## API
 
 ```groovy
+import org.obinexus.polycall.Peer
 import org.obinexus.polycall.Polycall
 
-int status = Polycall.runConfig('groovy-polycallrc')
-Polycall.runConfigOrThrow('groovy-polycallrc')
+int status = Polycall.runConfig('groovy-polycallrc')   // polycall_ffi_run_config(path, 1), unchanged status
+Polycall.runConfigOrThrow('groovy-polycallrc')        // PolycallException(status, statusName, detail)
+Polycall.runConfigOrThrow(path, false)                // validate only
+Polycall.describe(path)
+Polycall.call('127.0.0.1:7000', 'inventory', 'get', '{"item_id":"widget-a"}', 2000)
+
+Peer.open('alpha', '127.0.0.1:0', token).withCloseable { Peer alpha ->
+    Peer.open('beta', '127.0.0.1:0', token).withCloseable { Peer beta ->
+        alpha.register('beta', beta.endpoint)
+        alpha.send('beta', bytes, 'msg-1', 5000)      // exactly one delivery attempt
+        def m = beta.recv(5000)                       // m.sender, m.messageId, m.payload
+    }
+}
 ```
 
-- `runConfig` returns the exact libpolycall status.
-- `runConfigOrThrow` raises `PolycallException` for a non-zero status.
-- Omitting the path uses `groovy-polycallrc`.
-- `groovy.polycall.library` selects an explicit JNI library file.
+`Peer` covers open / close / endpoint / nodeId / register / unregister / list /
+ping / send / recv / tryRecv / cancel / health; it is thread-safe, `close()` is
+idempotent and wakes blocked receivers. See [`examples/basic.groovy`](examples/basic.groovy).
 
-See [`examples/basic.groovy`](examples/basic.groovy) for a runnable example.
+## Tests
 
-## Verification
-
-The default suite needs only a C compiler, Make, Node.js, and PowerShell on
-Windows:
-
-```shell
-npm test
+```sh
+POLYCALL_LIBRARY=/opt/polycall/lib/libpolycall.so.1 \
+POLYCALL_CLI=/opt/polycall/bin/polycall sh scripts/test.sh     # or: gradle test
 ```
 
-It verifies exact path forwarding, the required validation flag, status
-propagation, thin-adapter constraints, and npm package completeness.
+The JUnit 5 suite (Groovy test classes) runs against the real library and the
+real `polycall` CLI: version/ABI, run_config (valid, missing, invalid, strict,
+TLS), call against `polycall start` and `polycall daemon start`, two-node
+exchange both ways with empty/UTF-8/binary/1 MiB/1 MiB+1 payloads, registry
+ownership, duplicates, auth, dead peer, timeouts, too-small buffers,
+cancel/close, invalid handles, concurrent senders, and interop with
+`polycall peer serve/send/recv/health/register`. With `POLYCALL_INTEROP_ECHO`
+naming another binding's echo agent it also exchanges payloads with that
+binding. Checks that cannot run are reported as skipped, never passed;
+`scripts/test.sh` exits 77 when JDK 22+ or Gradle is missing.
+`src/test/c/fake_polycall_abi2.c` is a clearly-labelled fake library used only
+for the loader's ABI-mismatch test.
 
-When Groovy and a JDK matching the native compiler architecture are installed,
-run the end-to-end JNI smoke test:
-
-```shell
-npm run test:groovy
-```
-
-## Package layout
-
-- `src/main/groovy/` — public Groovy API and exception type
-- `c_src/` — C adapter and JNI bridge
-- `include/` — Groovy adapter C header
-- `generated/polycall/` — minimal generated core FFI declaration
-- `examples/` — Groovy usage example and sample configuration
-- `tests/` — native mock, JNI smoke test, and npm package test
+The npm package is a source distribution: `require('@obinexusltd/groovy-polycall')`
+returns the paths of the packaged sources and manifests.
 
 ## Author and license
 
-Copyright © 2026 Nnamdi Michael Okpala
-<okpalan@protonmail.com>.
-
+Copyright © 2026 Nnamdi Michael Okpala <okpalan@protonmail.com>.
 Released under the [MIT License](LICENSE).

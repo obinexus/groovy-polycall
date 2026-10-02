@@ -1,0 +1,15 @@
+# QA descriptor for the Polycall binding matrix (read by polycall/qa/run_qa.py).
+# This repository is NOT a Python package and is not pip-installable;
+# its native manifest is build.gradle.
+[tool.polycall.binding]
+name = "groovy-polycall"
+language = "Groovy"
+native_manifest = "build.gradle"
+registry = "npm"
+package = "@obinexusltd/groovy-polycall"
+abi = 1
+support = "supported"
+linux_image = "gradle:9-jdk25"
+build = "gradle --no-daemon assemble"
+test = "sh /qa/build-linux-core.sh && POLYCALL_LIBRARY=/opt/polycall/lib/libpolycall.so.1 POLYCALL_CLI=/opt/polycall/bin/polycall sh scripts/test.sh"
+windows_test = "gradle --no-daemon test  (JDK 22+; with POLYCALL_LIBRARY=<prefix>/bin/polycall.dll and POLYCALL_CLI=<prefix>/bin/polycall.exe)"

@@ -1,19 +1,14 @@
 {
   "name": "@obinexusltd/groovy-polycall",
   "version": "1.0.0",
-  "description": "Groovy/JNI source binding for libpolycall 1.5",
+  "description": "Groovy binding for the Polycall binding ABI v1 (Foreign Function & Memory API, JDK 22+). Source distribution of a Gradle project; not a JavaScript library.",
   "main": "index.js",
   "type": "commonjs",
   "files": [
     "index.js",
     "src/",
-    "c_src/",
-    "include/",
-    "generated/",
     "examples/",
-    "tests/",
     "scripts/",
-    "Makefile",
     "build.gradle",
     "settings.gradle",
     "groovy-polycallrc",
@@ -24,18 +19,13 @@
   ],
   "directories": {
     "example": "examples",
-    "lib": "src",
-    "test": "tests"
+    "lib": "src/main/groovy",
+    "test": "src/test/groovy"
   },
   "scripts": {
-    "build": "make",
-    "build:jni": "make jni",
-    "test": "make test && npm run verify:dry && npm run test:package",
-    "test:groovy": "make test-groovy",
-    "test:package": "node tests/package.test.js",
-    "verify:dry": "make verify-dry",
-    "verify": "npm test",
-    "prepack": "npm test"
+    "build": "gradle --no-daemon assemble",
+    "test": "sh scripts/test.sh",
+    "test:package": "node tests/package.test.js"
   },
   "repository": {
     "type": "git",
@@ -45,7 +35,7 @@
     "libpolycall",
     "polycall",
     "groovy",
-    "jni",
+    "ffm",
     "ffi"
   ],
   "author": {

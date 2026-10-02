@@ -1,4 +1,5 @@
-# Example Groovy runtime override
+# Example Groovy runtime override (same grammar as ../groovy-polycallrc;
+# check it with `polycall config validate examples/groovy-polycallrc`).
 log_level=debug
 max_connections=128
 network_timeout=2000

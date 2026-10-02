@@ -1,13 +1,17 @@
 {
   "name": "groovy-polycall",
   "package": "@obinexusltd/groovy-polycall",
-  "version": "1.5.0",
+  "maven": "org.obinexus:groovy-polycall",
+  "version": "1.0.0",
   "language": "Groovy",
   "adapter": true,
-  "ffi": true,
+  "ffi": "java.lang.foreign (JDK 22+), no C glue",
+  "abi": 1,
   "entry_point": "polycall_ffi_run_config",
   "config": "groovy-polycallrc",
-  "core": "../../src",
+  "core": "polycall >= 1.1.0 (binding ABI 1)",
+  "core_repository": "https://github.com/obinexus/polycall",
+  "repository": "https://github.com/obinexus/groovy-polycall",
   "license": "MIT",
   "author": "Nnamdi Michael Okpala"
 }
