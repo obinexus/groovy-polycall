@@ -8,6 +8,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 import static org.junit.jupiter.api.Assertions.assertEquals
+import static org.junit.jupiter.api.Assertions.assertFalse
 import static org.junit.jupiter.api.Assertions.assertThrows
 import static org.junit.jupiter.api.Assertions.assertTrue
 import static org.obinexus.polycall.Fixtures.expectStatus
@@ -69,6 +70,22 @@ class LibraryConfigTest {
         assertTrue(e2.reason.contains('missing symbol(s)') && e2.reason.contains('polycall_ffi_abi_version'), e2.message)
     }
 
+    /**
+     * A REAL pre-ABI core: libpolycall built from polycall v1.0.0 (commit
+     * 9fa354a), which exports only the 1.0 API. POLYCALL_TEST_V1_0_LIBRARY
+     * names that build; the test is skipped (never passed) without it.
+     */
+    @Test
+    void 'a real 1_0 core is refused with a clear error'() {
+        String old = System.getenv('POLYCALL_TEST_V1_0_LIBRARY')
+        Assumptions.assumeTrue(old?.trim() as boolean, 'POLYCALL_TEST_V1_0_LIBRARY not set (no libpolycall 1.0.x build provided)')
+        def e = assertThrows(PolycallLoadException, { NativeApi.load(old) })
+        assertEquals(old, e.library)
+        assertTrue(e.reason.contains('missing symbol(s)') && e.reason.contains('polycall_ffi_abi_version'), e.message)
+        assertTrue(e.reason.contains('older 1.0 core'), e.message)
+        assertFalse(e.reason.contains('polycall_get_version'), "the 1.0 API symbol is present: ${e.message}".toString())
+    }
+
     /** ABI mismatch, using a clearly-labelled FAKE library (src/test/c/fake_polycall_abi2.c). */
     @Test
     void 'abi mismatch is refused'() {
@@ -99,9 +116,24 @@ class LibraryConfigTest {
         expectStatus(Status.E_INVALID_ARGUMENT) { Polycall.runConfig('a\u0000b') }
     }
 
+    /**
+     * Non-ASCII directory and file name. The JVM runs in the ANSI code page on
+     * Windows, so this needs a core that opens config files by UTF-8 path
+     * (polycall 58bae1b and later); the binding passes the UTF-8 bytes intact.
+     */
     @Test
     void 'UTF-8 path is passed intact'() {
-        Polycall.runConfigOrThrow(write('café-世界-polycallrc', 'log_level=info\n'))
+        Path sub = Files.createDirectory(dir.resolve('dír-世界'))
+        Path p = sub.resolve('café-世界-polycallrc')
+        Files.writeString(p, 'log_level=info\nmax_connections=3\n')
+        String f = p.toString()
+        Polycall.runConfigOrThrow(f)
+        Polycall.runConfigOrThrow(f, false)
+        assertTrue(Polycall.describe(f).contains('max_connections'), f)
+        // the detail comes back as UTF-8 and names the exact (missing) path
+        String missing = sub.resolve('ñó-世界-polycallrc').toString()
+        def e = expectStatus(Status.E_NOT_FOUND) { Polycall.runConfigOrThrow(missing) }
+        assertTrue(e.detail.contains(missing), e.detail)
     }
 
     @Test
