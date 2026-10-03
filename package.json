@@ -9,6 +9,7 @@
     "src/",
     "examples/",
     "scripts/",
+    "tests/package.test.js",
     "build.gradle",
     "settings.gradle",
     "groovy-polycallrc",

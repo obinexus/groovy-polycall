@@ -1,6 +1,7 @@
 plugins {
     id 'groovy'
     id 'java-library'
+    id 'maven-publish'
 }
 
 group = 'org.obinexus'
@@ -22,6 +23,7 @@ dependencies {
 java {
     sourceCompatibility = JavaVersion.VERSION_22
     targetCompatibility = JavaVersion.VERSION_22
+    withSourcesJar()
 }
 
 tasks.withType(GroovyCompile).configureEach {
@@ -34,6 +36,18 @@ tasks.named('test') {
     environment 'POLYCALL_TELEMETRY', 'off'
     // tests read the repository's own rc files relative to the project directory
     workingDir = projectDir
+    // Run the tests on another installed JDK than the one running Gradle, e.g.
+    //   gradle test -PtestJavaVersion=27
+    // (Gradle 9.7 cannot compile this Groovy DSL build script when it runs on
+    // JDK 27 itself: "Unsupported class file major version 71").
+    def testJavaVersion = providers.gradleProperty('testJavaVersion').orNull
+    if (testJavaVersion) {
+        javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(testJavaVersion as int) }
+    }
+    doFirst {
+        def jvm = javaLauncher.get().metadata
+        logger.lifecycle("Test JVM: ${jvm.vendor} ${jvm.javaRuntimeVersion} at ${jvm.installationPath}")
+    }
     testLogging {
         events 'passed', 'skipped', 'failed'
         exceptionFormat = 'full'
@@ -47,5 +61,47 @@ tasks.named('jar') {
             'Enable-Native-Access': 'ALL-UNNAMED',
             'Implementation-Version': project.version
         )
+    }
+}
+
+// Maven publication org.obinexus:groovy-polycall (see polycall-binding.json).
+// Nothing is uploaded anywhere: the only repository is a directory inside build/,
+//   gradle publishMavenPublicationToBuildRepoRepository   -> build/repo
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            pom {
+                name = 'groovy-polycall'
+                description = project.description
+                url = 'https://github.com/obinexus/groovy-polycall'
+                licenses {
+                    license {
+                        name = 'MIT'
+                        url = 'https://opensource.org/license/mit'
+                    }
+                }
+                developers {
+                    developer {
+                        name = 'Nnamdi Michael Okpala'
+                        organization = 'OBINexus Computing'
+                    }
+                }
+                scm {
+                    url = 'https://github.com/obinexus/groovy-polycall'
+                    connection = 'scm:git:https://github.com/obinexus/groovy-polycall.git'
+                }
+                issueManagement {
+                    system = 'GitHub'
+                    url = 'https://github.com/obinexus/groovy-polycall/issues'
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'buildRepo'
+            url = layout.buildDirectory.dir('repo')
+        }
     }
 }
