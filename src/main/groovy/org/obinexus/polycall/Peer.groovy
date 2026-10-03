@@ -5,6 +5,7 @@ import groovy.transform.CompileStatic
 import java.lang.foreign.Arena
 import java.lang.foreign.MemorySegment
 import java.lang.ref.Cleaner
+import java.lang.ref.Reference
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -52,7 +53,10 @@ final class PeerMessage {
  * A Polycall peer node (polycall_peer_*) with its own registry and inbox,
  * exchanging payloads directly with other nodes in any language/process.
  * Thread-safe; close() is idempotent and wakes blocked receivers; a closed
- * peer's stale handle is reported by the library as E_INVALID_HANDLE.
+ * peer's stale handle is reported by the library as E_INVALID_HANDLE. A peer
+ * that is never closed is closed by a Cleaner once unreachable; every method
+ * keeps the peer reachable until its native call has returned, so the Cleaner
+ * can never close a handle that is still in use.
  */
 @CompileStatic
 final class Peer implements AutoCloseable {
@@ -119,16 +123,24 @@ final class Peer implements AutoCloseable {
     /** The bound "host:port" ("" for a send-only node). */
     String getEndpoint() {
         int h = handle
-        Polycall.text('peer_endpoint') { MemorySegment buf, long cap, MemorySegment len ->
-            Polycall.invokeInt(Polycall.api().peerEndpoint, h, buf, cap)
+        try {
+            return Polycall.text('peer_endpoint') { MemorySegment buf, long cap, MemorySegment len ->
+                Polycall.invokeInt(Polycall.api().peerEndpoint, h, buf, cap)
+            }
+        } finally {
+            Reference.reachabilityFence(this)
         }
     }
 
     /** This node's id. */
     String getNodeId() {
         int h = handle
-        Polycall.text('peer_node_id') { MemorySegment buf, long cap, MemorySegment len ->
-            Polycall.invokeInt(Polycall.api().peerNodeId, h, buf, cap)
+        try {
+            return Polycall.text('peer_node_id') { MemorySegment buf, long cap, MemorySegment len ->
+                Polycall.invokeInt(Polycall.api().peerNodeId, h, buf, cap)
+            }
+        } finally {
+            Reference.reachabilityFence(this)
         }
     }
 
@@ -141,6 +153,7 @@ final class Peer implements AutoCloseable {
                     "peer_register(${peerId})".toString())
         } finally {
             arena.close()
+            Reference.reachabilityFence(this)
         }
     }
 
@@ -152,22 +165,31 @@ final class Peer implements AutoCloseable {
                     Polycall.cstr(arena, peerId, 'peerId')), "peer_unregister(${peerId})".toString())
         } finally {
             arena.close()
+            Reference.reachabilityFence(this)
         }
     }
 
     /** THIS node's registry as JSON {"id":"host:port",...}. */
     String list() {
         int h = handle
-        Polycall.text('peer_list') { MemorySegment buf, long cap, MemorySegment len ->
-            Polycall.invokeInt(Polycall.api().peerList, h, buf, cap, len)
+        try {
+            return Polycall.text('peer_list') { MemorySegment buf, long cap, MemorySegment len ->
+                Polycall.invokeInt(Polycall.api().peerList, h, buf, cap, len)
+            }
+        } finally {
+            Reference.reachabilityFence(this)
         }
     }
 
     /** This node's health as JSON. */
     String health() {
         int h = handle
-        Polycall.text('peer_health') { MemorySegment buf, long cap, MemorySegment len ->
-            Polycall.invokeInt(Polycall.api().peerHealth, h, buf, cap, len)
+        try {
+            return Polycall.text('peer_health') { MemorySegment buf, long cap, MemorySegment len ->
+                Polycall.invokeInt(Polycall.api().peerHealth, h, buf, cap, len)
+            }
+        } finally {
+            Reference.reachabilityFence(this)
         }
     }
 
@@ -179,6 +201,7 @@ final class Peer implements AutoCloseable {
                     Polycall.uint32(timeoutMs, 'timeoutMs')), "peer_ping(${peer})".toString())
         } finally {
             arena.close()
+            Reference.reachabilityFence(this)
         }
     }
 
@@ -204,6 +227,7 @@ final class Peer implements AutoCloseable {
             Polycall.check(st, "peer_send(${peer}, ${payload.length} bytes, id=${messageId})".toString())
         } finally {
             arena.close()
+            Reference.reachabilityFence(this)
         }
     }
 
@@ -237,6 +261,7 @@ final class Peer implements AutoCloseable {
             return new PeerMessage(sender.getString(0L), mid.getString(0L), data)
         } finally {
             arena.close()
+            Reference.reachabilityFence(this)
         }
     }
 
@@ -273,7 +298,11 @@ final class Peer implements AutoCloseable {
 
     /** Wake every recv blocked on this node with E_CANCELLED. */
     void cancel() {
-        Polycall.check(Polycall.invokeInt(Polycall.api().peerCancel, handle), 'peer_cancel')
+        try {
+            Polycall.check(Polycall.invokeInt(Polycall.api().peerCancel, handle), 'peer_cancel')
+        } finally {
+            Reference.reachabilityFence(this)
+        }
     }
 
     /** Stop the listener, wake blocked receivers (E_CLOSED), release the node. Idempotent. */
