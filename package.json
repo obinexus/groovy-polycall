@@ -1,5 +1,5 @@
 {
-  "name": "@obinexusltd/groovy-polycall",
+  "name": "groovy-polycall",
   "version": "1.0.0",
   "description": "Groovy binding for the Polycall binding ABI v1 (Foreign Function & Memory API, JDK 22+). Source distribution of a Gradle project; not a JavaScript library.",
   "main": "index.js",

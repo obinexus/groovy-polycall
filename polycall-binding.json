@@ -1,6 +1,6 @@
 {
   "name": "groovy-polycall",
-  "package": "@obinexusltd/groovy-polycall",
+  "package": "groovy-polycall",
   "maven": "org.obinexus:groovy-polycall",
   "version": "1.0.0",
   "language": "Groovy",

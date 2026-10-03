@@ -9,7 +9,7 @@ const binding = require('..');
 const metadata = require('../package.json');
 const manifest = require('../polycall-binding.json');
 
-assert.equal(metadata.name, '@obinexusltd/groovy-polycall');
+assert.equal(metadata.name, 'groovy-polycall');
 assert.equal(metadata.license, 'MIT');
 assert.equal(metadata.author.name, 'Nnamdi Michael Okpala');
 assert.equal(metadata.publishConfig.access, 'public');

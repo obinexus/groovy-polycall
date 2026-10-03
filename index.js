@@ -1,6 +1,6 @@
 'use strict';
 
-// @obinexusltd/groovy-polycall is a source distribution of a Groovy binding;
+// groovy-polycall is a source distribution of a Groovy binding;
 // requiring it from Node.js only locates the packaged files.
 const path = require('node:path');
 
@@ -8,7 +8,7 @@ const fromPackageRoot = (...parts) => path.join(__dirname, ...parts);
 const source = (name) => fromPackageRoot('src', 'main', 'groovy', 'org', 'obinexus', 'polycall', name);
 
 module.exports = Object.freeze({
-  packageName: '@obinexusltd/groovy-polycall',
+  packageName: 'groovy-polycall',
   language: 'Groovy',
   abi: 1,
   groovySources: Object.freeze([

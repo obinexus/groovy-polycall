@@ -1,4 +1,4 @@
-# @obinexusltd/groovy-polycall
+# groovy-polycall
 
 Groovy binding for the [Polycall](https://github.com/obinexus/polycall) core
 library, **binding ABI v1** (`polycall.h`, documented in the core's
@@ -101,7 +101,7 @@ directory inside `build/` -- nothing is uploaded:
 gradle publishMavenPublicationToBuildRepoRepository    # -> build/repo
 ```
 
-The npm package is a source distribution: `require('@obinexusltd/groovy-polycall')`
+The npm package is a source distribution: `require('groovy-polycall')`
 returns the paths of the packaged sources and manifests.
 
 ## Author and license
